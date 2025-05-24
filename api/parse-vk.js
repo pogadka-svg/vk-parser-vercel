@@ -16,8 +16,32 @@ export default async function handler(req, res) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         code: `
-          const puppeteer = require('puppeteer');
-          (async () => {
-            const browser = await puppeteer.launch();
-            const page = await browser.newPage();
-            await page.goto('${url}', { waitUntil: 'domcontentloa
+          (async ({ page, context }) => {
+            await page.goto('${url}', { waitUntil: 'domcontentloaded' });
+            const title = await page.title();
+            let desc = '';
+            try {
+              desc = await page.$eval('meta[name="description"]', el => el.content);
+            } catch (e) {
+              desc = 'Описание не найдено';
+            }
+            return { title, description: desc };
+          })
+        `
+      })
+    });
+
+    const result = await response.json();
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("❌ Ошибка при запросе к browserless:", err);
+    let errorText = '';
+    try {
+      errorText = await err?.response?.text?.();
+    } catch (e) {
+      errorText = err.message;
+    }
+    console.error("📄 Ответ от browserless:", errorText);
+    res.status(500).json({ error: 'Failed to parse VK video', details: errorText });
+  }
+}
