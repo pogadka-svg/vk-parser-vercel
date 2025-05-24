@@ -11,24 +11,22 @@ export default async function handler(req, res) {
   try {
     const browserlessApi = 'https://chrome.browserless.io/function?token=2SMzLxAIJYMaWLQ8950b3ccc5c8b21695503d3fabc67cba65';
 
+    const code = `(async ({ page }) => {
+      await page.goto("${url}", { waitUntil: "domcontentloaded" });
+      const title = await page.title();
+      let desc = "";
+      try {
+        desc = await page.$eval("meta[name='description']", el => el.content);
+      } catch (e) {
+        desc = "Описание не найдено";
+      }
+      return { title, description: desc };
+    })`;
+
     const response = await fetch(browserlessApi, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        code: `
-          (async ({ page, context }) => {
-            await page.goto('${url}', { waitUntil: 'domcontentloaded' });
-            const title = await page.title();
-            let desc = '';
-            try {
-              desc = await page.$eval('meta[name="description"]', el => el.content);
-            } catch (e) {
-              desc = 'Описание не найдено';
-            }
-            return { title, description: desc };
-          })
-        `
-      })
+      body: JSON.stringify({ code })
     });
 
     const raw = await response.text();
@@ -47,4 +45,17 @@ export default async function handler(req, res) {
 
     res.status(200).json(result);
   } catch (err) {
-    console.e
+    console.error("❌ Ошибка при запросе к browserless:", err);
+    let errorText = '';
+    try {
+      errorText = await err?.response?.text?.();
+    } catch (e) {
+      errorText = err.message;
+    }
+    console.error("📄 Ответ от browserless:", errorText);
+    res.status(500).json({
+      error: 'Failed to parse VK video',
+      details: errorText
+    });
+  }
+}
