@@ -31,17 +31,20 @@ export default async function handler(req, res) {
       })
     });
 
-    const result = await response.json();
+    const raw = await response.text();
+    console.log('📦 RAW-ответ от browserless:', raw);
+
+    let result;
+    try {
+      result = JSON.parse(raw);
+    } catch (e) {
+      return res.status(500).json({
+        error: 'Failed to parse VK video',
+        details: 'Ответ от browserless не в формате JSON',
+        raw
+      });
+    }
+
     res.status(200).json(result);
   } catch (err) {
-    console.error("❌ Ошибка при запросе к browserless:", err);
-    let errorText = '';
-    try {
-      errorText = await err?.response?.text?.();
-    } catch (e) {
-      errorText = err.message;
-    }
-    console.error("📄 Ответ от browserless:", errorText);
-    res.status(500).json({ error: 'Failed to parse VK video', details: errorText });
-  }
-}
+    console.e
