@@ -20,20 +20,4 @@ export default async function handler(req, res) {
           (async () => {
             const browser = await puppeteer.launch();
             const page = await browser.newPage();
-            await page.goto('${url}', { waitUntil: 'domcontentloaded' });
-            const title = await page.title();
-            const desc = await page.$eval('meta[name="description"]', el => el.content);
-            await browser.close();
-            return { title, description: desc };
-          })();
-        `
-      })
-    });
-
-    const result = await response.json();
-    res.status(200).json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to parse VK video' });
-  }
-}
+            await page.goto('${url}', { waitUntil: 'domcontentloa
